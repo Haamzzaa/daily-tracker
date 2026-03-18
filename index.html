@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hamza's Daily Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F8F7F4;color:#2C2C2A;min-height:100vh;padding:0 0 60px}
+.nav{display:flex;background:#fff;border-bottom:0.5px solid #D3D1C7;position:sticky;top:0;z-index:100}
+.nav-btn{flex:1;padding:14px 8px;font-size:13px;font-weight:500;color:#888780;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}
+.nav-btn.active{color:#7F77DD;border-bottom-color:#7F77DD}
+.page{display:none;max-width:680px;margin:0 auto;padding:20px 16px}
+.page.active{display:block}
+
+/* ---- shared ---- */
+h2{font-size:18px;font-weight:500;margin-bottom:4px}
+.muted{font-size:13px;color:#888780}
+.card{background:#fff;border:0.5px solid #D3D1C7;border-radius:12px;padding:16px;margin-bottom:12px}
+.section-title{font-size:10px;font-weight:600;letter-spacing:.08em;color:#B4B2A9;text-transform:uppercase;margin:20px 0 8px}
+.section-title:first-child{margin-top:0}
+
+/* ---- TODAY ---- */
+.date-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;border:0.5px solid #D3D1C7;border-radius:12px;padding:10px 16px;margin-bottom:16px}
+.progress-top{display:flex;justify-content:space-between;font-size:12px;color:#888780;margin-bottom:6px}
+.progress-bar{height:6px;background:#E8E6E0;border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:#7F77DD;border-radius:99px;transition:width .4s}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.stat{background:#fff;border:0.5px solid #D3D1C7;border-radius:10px;padding:10px 8px;text-align:center}
+.stat-num{font-size:18px;font-weight:600;margin-bottom:2px}
+.stat-label{font-size:10px;color:#888780}
+.block{display:flex;align-items:flex-start;gap:12px;background:#fff;border:0.5px solid #D3D1C7;border-radius:10px;padding:11px 13px;margin-bottom:5px;cursor:pointer;user-select:none;position:relative;overflow:hidden;transition:opacity .2s}
+.block::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.block.prayer::before{background:#7F77DD}
+.block.spiritual::before{background:#1D9E75}
+.block.physical::before{background:#BA7517}
+.block.duniya::before{background:#378ADD}
+.block.rest::before{background:#B4B2A9}
+.block.done{opacity:.5}
+.block.done .block-title{text-decoration:line-through}
+.checkbox{width:20px;height:20px;border:1.5px solid #D3D1C7;border-radius:6px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.block.done.prayer .checkbox{background:#7F77DD;border-color:#7F77DD}
+.block.done.spiritual .checkbox{background:#1D9E75;border-color:#1D9E75}
+.block.done.physical .checkbox{background:#BA7517;border-color:#BA7517}
+.block.done.duniya .checkbox{background:#378ADD;border-color:#378ADD}
+.block.done.rest .checkbox{background:#888780;border-color:#888780}
+.checkbox svg{display:none}
+.block.done .checkbox svg{display:block}
+.block-time{font-size:11px;color:#B4B2A9;margin-bottom:2px}
+.block-title{font-size:13px;font-weight:500;color:#2C2C2A;margin-bottom:2px}
+.block-sub{font-size:11px;color:#888780;line-height:1.5}
+.tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:99px;margin-left:auto;flex-shrink:0;align-self:center}
+.tag.prayer{background:#EEEDFE;color:#534AB7}
+.tag.spiritual{background:#E1F5EE;color:#0F6E56}
+.tag.physical{background:#FAEEDA;color:#854F0B}
+.tag.duniya{background:#E6F1FB;color:#185FA5}
+.tag.rest{background:#F1EFE8;color:#5F5E5A}
+.reset-btn{width:100%;margin-top:20px;padding:11px;background:none;border:0.5px solid #D3D1C7;border-radius:10px;font-size:13px;color:#888780;cursor:pointer}
+.reset-btn:hover{background:#F1EFE8}
+.congrats{display:none;text-align:center;background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:12px;padding:14px;margin-top:16px}
+.congrats.show{display:block}
+.congrats p{font-size:13px;color:#3C3489;font-weight:500}
+
+/* ---- HISTORY ---- */
+.history-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.h-stat{background:#fff;border:0.5px solid #D3D1C7;border-radius:10px;padding:12px;text-align:center}
+.h-stat-num{font-size:22px;font-weight:600;color:#7F77DD;margin-bottom:2px}
+.h-stat-label{font-size:11px;color:#888780}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.cal-header{text-align:center;font-size:10px;color:#B4B2A9;padding:2px 0}
+.cal-day{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#B4B2A9;cursor:default}
+.cal-day.empty{background:none}
+.cal-day.has-data{cursor:pointer}
+.cal-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:#888780;margin-top:8px;justify-content:flex-end}
+.cal-legend-boxes{display:flex;gap:3px}
+.cal-legend-box{width:12px;height:12px;border-radius:2px}
+.chart-wrap{position:relative;width:100%;height:180px;margin-top:8px}
+.log-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid #F1EFE8}
+.log-item:last-child{border-bottom:none}
+.log-date{font-size:12px;color:#888780;min-width:90px}
+.log-bar-wrap{flex:1;height:6px;background:#F1EFE8;border-radius:99px;overflow:hidden}
+.log-bar{height:100%;border-radius:99px;background:#7F77DD}
+.log-score{font-size:12px;font-weight:500;color:#2C2C2A;min-width:36px;text-align:right}
+
+/* ---- FOCUS ---- */
+.timer-ring{display:flex;flex-direction:column;align-items:center;padding:24px 0 16px}
+.ring-wrap{position:relative;width:180px;height:180px;margin-bottom:20px}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#F1EFE8;stroke-width:10}
+.ring-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.timer-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.timer-display{font-size:32px;font-weight:600;color:#2C2C2A;letter-spacing:-1px}
+.timer-label{font-size:11px;color:#888780;margin-top:2px}
+.timer-controls{display:flex;gap:10px;margin-bottom:16px}
+.t-btn{flex:1;padding:11px;border-radius:10px;font-size:13px;font-weight:500;border:0.5px solid #D3D1C7;background:#fff;cursor:pointer;transition:all .15s;color:#2C2C2A}
+.t-btn:hover{background:#F1EFE8}
+.t-btn.primary{background:#7F77DD;border-color:#7F77DD;color:#fff}
+.t-btn.primary:hover{background:#534AB7}
+.t-btn.danger{background:#FCEBEB;border-color:#F09595;color:#A32D2D}
+.mode-row{display:flex;gap:8px;margin-bottom:20px}
+.mode-btn{flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:500;border:0.5px solid #D3D1C7;background:#fff;cursor:pointer;color:#888780;transition:all .15s}
+.mode-btn.active{background:#EEEDFE;border-color:#AFA9EC;color:#534AB7}
+.session-input{display:flex;gap:8px;margin-bottom:12px}
+.session-input input{flex:1;padding:10px 12px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;color:#2C2C2A;background:#fff;outline:none}
+.session-input input:focus{border-color:#7F77DD}
+.session-input button{padding:10px 16px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
+.session-log-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid #F1EFE8;font-size:13px}
+.session-log-item:last-child{border-bottom:none}
+.session-dot{width:8px;height:8px;border-radius:50%;background:#7F77DD;flex-shrink:0}
+.session-name{flex:1;color:#2C2C2A}
+.session-dur{color:#888780;font-size:12px}
+.session-time-stamp{color:#B4B2A9;font-size:11px;min-width:50px;text-align:right}
+.empty-state{text-align:center;padding:32px 16px;color:#B4B2A9;font-size:13px}
+.sync-bar{text-align:center;font-size:11px;padding:5px 12px;display:none}
+.sync-bar.syncing{display:block;background:#FAEEDA;color:#854F0B}
+.sync-bar.synced{display:block;background:#E1F5EE;color:#0F6E56}
+.sync-bar.offline{display:block;background:#F1EFE8;color:#888780}
+</style>
+</head>
+<body>
+
+<div id="syncBar" class="sync-bar"></div>
+
+<!-- Firebase compat SDK -->
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-database-compat.min.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAGgQCBCpyJgpClvGw_GuUlCMCWpfXYqI0",
+  authDomain: "hamza-tracker-55db7.firebaseapp.com",
+  databaseURL: "https://hamza-tracker-55db7-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hamza-tracker-55db7",
+  storageBucket: "hamza-tracker-55db7.firebasestorage.app",
+  messagingSenderId: "359104113411",
+  appId: "1:359104113411:web:aab02b2070f7001f661736"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const UID = 'hamza';
+</script>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('today')">Today</button>
+  <button class="nav-btn" onclick="showPage('history')">History</button>
+  <button class="nav-btn" onclick="showPage('focus')">Focus</button>
+</nav>
+
+<!-- TODAY -->
+<div id="page-today" class="page active">
+  <div class="date-bar">
+    <span class="muted">Today</span>
+    <span style="font-size:14px;font-weight:500" id="dateDisplay"></span>
+  </div>
+  <div class="progress-top"><span id="progressLabel">0 of 20 completed</span><span id="progressPct">0%</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="statPrayer" style="color:#7F77DD">0/5</div><div class="stat-label">Prayers</div></div>
+    <div class="stat"><div class="stat-num" id="statSpiritual" style="color:#1D9E75">0/5</div><div class="stat-label">Spiritual</div></div>
+    <div class="stat"><div class="stat-num" id="statPhysical" style="color:#BA7517">0/1</div><div class="stat-label">Physical</div></div>
+    <div class="stat"><div class="stat-num" id="statDuniya" style="color:#378ADD">0/4</div><div class="stat-label">Duniya</div></div>
+  </div>
+  <div id="scheduleBlocks"></div>
+  <div class="congrats" id="congrats"><p>Alhamdulillah — full day completed, Hamza. Every single block. Do it again tomorrow.</p></div>
+  <button class="reset-btn" onclick="resetDay()">Reset for new day</button>
+  <p style="text-align:center;font-size:11px;color:#B4B2A9;margin-top:14px;line-height:1.6">If you miss a block — don't make it up.<br>Just start the next block on time.</p>
+</div>
+
+<!-- HISTORY -->
+<div id="page-history" class="page">
+  <div style="margin-bottom:20px"><h2>History</h2><p class="muted">Your track record</p></div>
+  <div class="history-summary">
+    <div class="h-stat"><div class="h-stat-num" id="hStreak">0</div><div class="h-stat-label">day streak</div></div>
+    <div class="h-stat"><div class="h-stat-num" id="hBest">0</div><div class="h-stat-label">best streak</div></div>
+    <div class="h-stat"><div class="h-stat-num" id="hAvg">0%</div><div class="h-stat-label">avg score</div></div>
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px">Last 10 weeks</div>
+    <div class="calendar-grid" id="calHeaders"></div>
+    <div class="calendar-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span>Less</span>
+      <div class="cal-legend-boxes">
+        <div class="cal-legend-box" style="background:#F1EFE8"></div>
+        <div class="cal-legend-box" style="background:#CECBF6"></div>
+        <div class="cal-legend-box" style="background:#AFA9EC"></div>
+        <div class="cal-legend-box" style="background:#7F77DD"></div>
+        <div class="cal-legend-box" style="background:#534AB7"></div>
+      </div>
+      <span>More</span>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:8px">Last 7 days</div>
+    <div class="chart-wrap"><canvas id="weekChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px">Daily log</div>
+    <div id="logList"></div>
+  </div>
+</div>
+
+<!-- FOCUS -->
+<div id="page-focus" class="page">
+  <div style="margin-bottom:16px"><h2>Focus</h2><p class="muted">Build deep work habits</p></div>
+  <div class="card">
+    <div class="mode-row">
+      <button class="mode-btn active" id="modeWork" onclick="setMode('work')">Work 25m</button>
+      <button class="mode-btn" id="modeShort" onclick="setMode('short')">Break 5m</button>
+      <button class="mode-btn" id="modeLong" onclick="setMode('long')">Long 15m</button>
+    </div>
+    <div class="timer-ring">
+      <div class="ring-wrap">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle class="ring-bg" cx="90" cy="90" r="80"/>
+          <circle class="ring-fill" id="ringFill" cx="90" cy="90" r="80" stroke="#7F77DD" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-text">
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-label" id="timerLabel">Ready</div>
+        </div>
+      </div>
+      <div class="timer-controls">
+        <button class="t-btn primary" id="startBtn" onclick="toggleTimer()">Start</button>
+        <button class="t-btn" onclick="resetTimer()">Reset</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#888780;text-align:center;margin-top:-8px">Sessions today: <span id="sessionCount" style="font-weight:500;color:#7F77DD">0</span></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px">Log a focus session</div>
+    <div class="session-input">
+      <input type="text" id="sessionName" placeholder="What did you work on? (e.g. DSA – arrays)" maxlength="60"/>
+      <button onclick="logSession()">Log</button>
+    </div>
+    <div id="sessionLogList"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const TOTAL_BLOCKS = 20;
+
+const schedule = [
+  {section:"Pre-Fajr",blocks:[
+    {id:"tahajjud",time:"5:00 am",title:"Wake up + Tahajjud",sub:"Wudu, 4–8 rakats, personal duas.",type:"prayer"},
+    {id:"adhkar_morning",time:"5:20 – 5:40",title:"Morning adhkar + quiet time",sub:"Morning duas, istighfar — stillness before Fajr.",type:"spiritual"},
+  ]},
+  {section:"Fajr",blocks:[
+    {id:"fajr",time:"5:45 am",title:"Fajr",sub:"Non-negotiable anchor. Pray on time.",type:"prayer"},
+    {id:"quran_personal",time:"6:00 – 6:15",title:"Personal Quran / reflection",sub:"Short recitation before teacher arrives.",type:"spiritual"},
+    {id:"quran_teacher",time:"6:15 – 7:15",title:"Quran with teacher",sub:"Recitation, tajweed correction — 1 hour.",type:"spiritual"},
+  ]},
+  {section:"Morning",blocks:[
+    {id:"ishraq",time:"7:15 – 7:35",title:"Ishraq prayer",sub:"~15 min after sunrise. 2 rakats.",type:"spiritual"},
+    {id:"gym",time:"7:35 – 8:30",title:"Gym / home workout",sub:"Barbell, dumbbells, or treadmill.",type:"physical"},
+    {id:"prep",time:"8:30 – 9:00",title:"Shower + breakfast + prep",sub:"Fuel up, shift into work mode.",type:"rest"},
+  ]},
+  {section:"Deep Work",blocks:[
+    {id:"dsa",time:"9:00 – 10:00",title:"DSA practice",sub:"Striver's A2Z — 1–2 problems. Push to GitHub.",type:"duniya"},
+  ]},
+  {section:"Internship",blocks:[
+    {id:"internship_am",time:"10:00 – 1:00",title:"Internship — active work",sub:"Tasks, communication, assigned work.",type:"duniya"},
+    {id:"dhuhr",time:"1:15 pm",title:"Dhuhr",sub:"Hard stop. Pray, rest, then resume.",type:"prayer"},
+    {id:"internship_pm",time:"1:30 – 3:30",title:"Internship continued / DSA overflow",sub:"Finish tasks or 1 more DSA problem.",type:"duniya"},
+  ]},
+  {section:"Afternoon",blocks:[
+    {id:"rest_block",time:"3:30 – 4:30",title:"Rest / free time",sub:"Nap, read, paint. Protect this block.",type:"rest"},
+    {id:"quran_evening",time:"4:30 – 5:15",title:"Quran — evening reading",sub:"1–2 pages with reflection.",type:"spiritual"},
+    {id:"asr",time:"5:15 pm",title:"Asr",sub:"Anchor. Do not delay.",type:"prayer"},
+  ]},
+  {section:"Evening",blocks:[
+    {id:"wind_down",time:"5:30 – 6:35",title:"Wind down + evening adhkar",sub:"Walk, stretch. Evening duas before Maghrib.",type:"spiritual"},
+    {id:"maghrib",time:"6:35 pm",title:"Maghrib",sub:"Pray immediately at adhan. Then dinner.",type:"prayer"},
+    {id:"dinner",time:"6:45 – 7:45",title:"Dinner + family time",sub:"Eat, relax, be present.",type:"rest"},
+    {id:"review",time:"7:45 – 8:15",title:"Review + internship update post",sub:"GitHub commit, group update, plan tomorrow.",type:"duniya"},
+    {id:"isha",time:"8:15 pm",title:"Isha",sub:"Final anchor of the day.",type:"prayer"},
+  ]},
+  {section:"Night",blocks:[
+    {id:"reading",time:"8:30 – 9:15",title:"Wind-down — book / journal",sub:"Read, paint, or journal. No doom scrolling.",type:"spiritual"},
+    {id:"sleep",time:"9:30 pm",title:"Sleep",sub:"Target 9:30–10:00 pm. Tahajjud needs a full night.",type:"rest"},
+  ]},
+];
+
+// ---- Firebase storage helpers ----
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+
+function showSync(msg, type){
+  const bar = document.getElementById('syncBar');
+  bar.textContent = msg;
+  bar.className = 'sync-bar ' + type;
+  if(type === 'synced') setTimeout(()=>{ bar.style.display='none'; }, 2000);
+}
+
+// Write today's state to Firebase + localStorage fallback
+function saveTodayState(state){
+  localStorage.setItem('h_today', JSON.stringify({date:todayKey(), state}));
+  showSync('Syncing...', 'syncing');
+  db.ref(UID+'/today').set({date:todayKey(), state})
+    .then(()=> showSync('Synced', 'synced'))
+    .catch(()=> showSync('Saved offline', 'offline'));
+}
+
+// Write history entry
+function archiveToday(done, total){
+  const entry = {done, total, pct: Math.round(done/total*100)};
+  localStorage.setItem('h_history_'+todayKey(), JSON.stringify(entry));
+  db.ref(UID+'/history/'+todayKey()).set(entry).catch(()=>{});
+}
+
+// Read history from Firebase, fallback to localStorage
+function getHistory(){
+  try{ return JSON.parse(localStorage.getItem('h_history')||'{}'); }catch(e){ return {}; }
+}
+function saveHistory(h){ localStorage.setItem('h_history', JSON.stringify(h)); }
+
+// Sessions
+function getSessions(){ try{ return JSON.parse(localStorage.getItem('h_sessions')||'[]'); }catch(e){ return []; } }
+function saveSessions(s){
+  localStorage.setItem('h_sessions', JSON.stringify(s));
+  db.ref(UID+'/sessions').set(s).catch(()=>{});
+}
+
+let todayState = {};
+
+// ---- Bootstrap: load from Firebase first, fallback to localStorage ----
+function bootstrap(){
+  showSync('Loading your data...', 'syncing');
+
+  // Detect new day — snapshot yesterday if stored date differs
+  try{
+    const local = JSON.parse(localStorage.getItem('h_today')||'{}');
+    if(local.date && local.date !== todayKey()){
+      const allIds = schedule.flatMap(s=>s.blocks.map(b=>b.id));
+      const st = local.state||{};
+      const done = allIds.filter(i=>st[i]).length;
+      const h = getHistory();
+      if(!h[local.date]){ h[local.date]={done,total:allIds.length,pct:Math.round(done/allIds.length*100)}; saveHistory(h); }
+      db.ref(UID+'/history/'+local.date).once('value').then(snap=>{ if(!snap.exists()) db.ref(UID+'/history/'+local.date).set(h[local.date]).catch(()=>{}); });
+    }
+  }catch(e){}
+
+  // Load today's state from Firebase
+  db.ref(UID+'/today').once('value').then(snap=>{
+    if(snap.exists()){
+      const data = snap.val();
+      if(data.date === todayKey()) todayState = data.state||{};
+      else todayState = {};
+    } else {
+      // Fallback to localStorage
+      try{
+        const local = JSON.parse(localStorage.getItem('h_today')||'{}');
+        if(local.date === todayKey()) todayState = local.state||{};
+      }catch(e){}
+    }
+
+    // Load history from Firebase
+    db.ref(UID+'/history').once('value').then(hSnap=>{
+      if(hSnap.exists()){
+        const fbHistory = hSnap.val()||{};
+        // Merge with localStorage history
+        const localH = getHistory();
+        const merged = Object.assign({}, localH, fbHistory);
+        saveHistory(merged);
+      }
+
+      // Load sessions from Firebase
+      db.ref(UID+'/sessions').once('value').then(sSnap=>{
+        if(sSnap.exists()) localStorage.setItem('h_sessions', JSON.stringify(sSnap.val()||[]));
+
+        // Listen for real-time today changes (other device ticked something)
+        db.ref(UID+'/today').on('value', snap=>{
+          if(!snap.exists()) return;
+          const data = snap.val();
+          if(data.date !== todayKey()) return;
+          const newState = data.state||{};
+          // Only update if different from current to avoid loop
+          if(JSON.stringify(newState) !== JSON.stringify(todayState)){
+            todayState = newState;
+            localStorage.setItem('h_today', JSON.stringify({date:todayKey(), state:todayState}));
+            renderSchedule();
+            updateTodayUI();
+          }
+        });
+
+        // All loaded — render
+        renderSchedule();
+        updateTodayUI();
+        renderSessions();
+        const allIds = schedule.flatMap(s=>s.blocks.map(b=>b.id));
+        const done = allIds.filter(i=>todayState[i]).length;
+        archiveToday(done, allIds.length);
+        showSync('Synced', 'synced');
+      });
+    });
+  }).catch(()=>{
+    // Firebase failed — use localStorage entirely
+    try{
+      const local = JSON.parse(localStorage.getItem('h_today')||'{}');
+      if(local.date === todayKey()) todayState = local.state||{};
+    }catch(e){}
+    renderSchedule();
+    updateTodayUI();
+    renderSessions();
+    showSync('Offline — changes saved locally', 'offline');
+  });
+}
+
+// ---- TODAY ----
+function renderSchedule(){
+  const container = document.getElementById('scheduleBlocks');
+  container.innerHTML='';
+  schedule.forEach(sec=>{
+    const secDiv=document.createElement('div');
+    secDiv.innerHTML=`<div class="section-title">${sec.section}</div>`;
+    sec.blocks.forEach(b=>{
+      const div=document.createElement('div');
+      div.id='b_'+b.id;
+      div.className='block '+b.type+(todayState[b.id]?' done':'');
+      div.onclick=()=>toggleBlock(b.id,b.type);
+      div.innerHTML=`<div class="checkbox"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="flex:1"><div class="block-time">${b.time}</div><div class="block-title">${b.title}</div><div class="block-sub">${b.sub}</div></div><span class="tag ${b.type}">${b.type.charAt(0).toUpperCase()+b.type.slice(1)}</span>`;
+      secDiv.appendChild(div);
+    });
+    container.appendChild(secDiv);
+  });
+}
+
+function toggleBlock(id,type){
+  todayState[id]=!todayState[id];
+  saveTodayState(todayState);
+  const el=document.getElementById('b_'+id);
+  const allIds=schedule.flatMap(s=>s.blocks.map(b=>b.id));
+  const done=allIds.filter(i=>todayState[i]).length;
+  if(el) el.className='block '+type+(todayState[id]?' done':'');
+  updateTodayUI();
+  archiveToday(done,allIds.length);
+}
+
+function updateTodayUI(){
+  const allBlocks=schedule.flatMap(s=>s.blocks);
+  const total=allBlocks.length;
+  let done=0;
+  let counts={prayer:[0,0],spiritual:[0,0],physical:[0,0],duniya:[0,0]};
+  allBlocks.forEach(b=>{
+    if(todayState[b.id]) done++;
+    if(counts[b.type]){counts[b.type][1]++;if(todayState[b.id])counts[b.type][0]++;}
+  });
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=done+' of '+total+' completed';
+  document.getElementById('progressPct').textContent=pct+'%';
+  document.getElementById('statPrayer').textContent=counts.prayer[0]+'/'+counts.prayer[1];
+  document.getElementById('statSpiritual').textContent=counts.spiritual[0]+'/'+counts.spiritual[1];
+  document.getElementById('statPhysical').textContent=counts.physical[0]+'/'+counts.physical[1];
+  document.getElementById('statDuniya').textContent=counts.duniya[0]+'/'+counts.duniya[1];
+  document.getElementById('congrats').className='congrats'+(done===total?' show':'');
+}
+
+function archiveToday(done,total){
+  const h=getHistory();
+  h[todayKey()]={done,total,pct:Math.round(done/total*100)};
+  saveHistory(h);
+}
+
+function resetDay(){
+  todayState={};
+  saveTodayState(todayState);
+  renderSchedule();
+  updateTodayUI();
+}
+
+// ---- HISTORY ----
+function pctToColor(pct){
+  if(pct===undefined||pct===null) return '#F1EFE8';
+  if(pct===0) return '#F1EFE8';
+  if(pct<25) return '#CECBF6';
+  if(pct<50) return '#AFA9EC';
+  if(pct<75) return '#7F77DD';
+  return '#534AB7';
+}
+
+function renderHistory(){
+  const h=getHistory();
+  const keys=Object.keys(h).sort();
+
+  // streak: count backwards from today, consecutive days with pct>=50
+  let streak=0,best=0,totalPct=0,count=0;
+  const sortedDesc=[...keys].sort().reverse();
+  // current streak — must start from today or yesterday
+  const todayStr=todayKey();
+  const yesterdayStr=addDays(todayStr,-1);
+  let checkDate=h[todayStr]? todayStr : (h[yesterdayStr]? yesterdayStr : null);
+  if(checkDate){
+    let d=checkDate;
+    while(h[d] && h[d].pct>=50){ streak++; d=addDays(d,-1); }
+  }
+  // best streak
+  let run=0;
+  [...keys].sort().forEach(k=>{
+    if(h[k].pct>=50){run++;if(run>best)best=run;}else run=0;
+    totalPct+=h[k].pct; count++;
+  });
+  document.getElementById('hStreak').textContent=streak;
+  document.getElementById('hBest').textContent=best;
+  document.getElementById('hAvg').textContent=count?Math.round(totalPct/count)+'%':'0%';
+
+  // calendar — last 70 days
+  const calHeaders=document.getElementById('calHeaders');
+  const calGrid=document.getElementById('calGrid');
+  calHeaders.innerHTML=''; calGrid.innerHTML='';
+  ['S','M','T','W','T','F','S'].forEach(d=>{
+    calHeaders.innerHTML+=`<div class="cal-header">${d}</div>`;
+  });
+  const endDate=new Date(); endDate.setHours(0,0,0,0);
+  const startDate=new Date(endDate); startDate.setDate(endDate.getDate()-69);
+  const firstDow=startDate.getDay();
+  for(let i=0;i<firstDow;i++) calGrid.innerHTML+=`<div class="cal-day empty"></div>`;
+  for(let d=new Date(startDate);d<=endDate;d.setDate(d.getDate()+1)){
+    const key=d.toISOString().slice(0,10);
+    const data=h[key];
+    const color=data?pctToColor(data.pct):'#F1EFE8';
+    const title=data?key+': '+data.pct+'% ('+data.done+'/'+data.total+')':key+': no data';
+    calGrid.innerHTML+=`<div class="cal-day${data?' has-data':''}" style="background:${color}" title="${title}"></div>`;
+  }
+
+  // weekly bar chart
+  const last7=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const k=d.toISOString().slice(0,10);
+    last7.push({label:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()],pct:h[k]?h[k].pct:0,key:k});
+  }
+  const canvas=document.getElementById('weekChart');
+  if(window._weekChart) window._weekChart.destroy();
+  window._weekChart=new Chart(canvas,{
+    type:'bar',
+    data:{
+      labels:last7.map(d=>d.label),
+      datasets:[{data:last7.map(d=>d.pct),backgroundColor:last7.map(d=>pctToColor(d.pct)),borderRadius:6,borderSkipped:false}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw+'%'}}},
+      scales:{
+        y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'#F1EFE8'}},
+        x:{ticks:{font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+
+  // log list
+  const logList=document.getElementById('logList');
+  const recentKeys=[...keys].sort().reverse().slice(0,14);
+  if(recentKeys.length===0){logList.innerHTML='<div class="empty-state">No history yet. Complete some tasks today!</div>';return;}
+  logList.innerHTML=recentKeys.map(k=>{
+    const d=h[k];
+    const dateObj=new Date(k+'T00:00:00');
+    const label=days[dateObj.getDay()].slice(0,3)+', '+dateObj.getDate()+' '+months[dateObj.getMonth()];
+    return `<div class="log-item"><span class="log-date">${label}</span><div class="log-bar-wrap"><div class="log-bar" style="width:${d.pct}%;background:${pctToColor(d.pct)}"></div></div><span class="log-score">${d.pct}%</span></div>`;
+  }).join('');
+}
+
+function addDays(dateStr,n){
+  const d=new Date(dateStr+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10);
+}
+
+// ---- FOCUS / POMODORO ----
+const MODES={work:25*60,short:5*60,long:15*60};
+const CIRCUMFERENCE=2*Math.PI*80;
+let mode='work', timeLeft=MODES.work, running=false, interval=null, sessionsDoneToday=0;
+
+function setMode(m){
+  if(running) return;
+  mode=m;
+  timeLeft=MODES[m];
+  document.getElementById('ringFill').style.stroke=m==='work'?'#7F77DD':m==='short'?'#1D9E75':'#BA7517';
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mode'+m.charAt(0).toUpperCase()+m.slice(1)).classList.add('active');
+  updateTimerDisplay();
+}
+
+function toggleTimer(){
+  if(running){
+    clearInterval(interval); running=false;
+    document.getElementById('startBtn').textContent='Resume';
+    document.getElementById('timerLabel').textContent='Paused';
+  } else {
+    running=true;
+    document.getElementById('startBtn').textContent='Pause';
+    document.getElementById('timerLabel').textContent=mode==='work'?'Focus':'Break';
+    interval=setInterval(()=>{
+      timeLeft--;
+      updateTimerDisplay();
+      if(timeLeft<=0){
+        clearInterval(interval); running=false;
+        document.getElementById('startBtn').textContent='Start';
+        if(mode==='work'){
+          sessionsDoneToday++;
+          document.getElementById('sessionCount').textContent=sessionsDoneToday;
+          document.getElementById('timerLabel').textContent='Done! Take a break';
+        } else {
+          document.getElementById('timerLabel').textContent='Break over!';
+        }
+      }
+    },1000);
+  }
+}
+
+function resetTimer(){
+  clearInterval(interval); running=false;
+  timeLeft=MODES[mode];
+  document.getElementById('startBtn').textContent='Start';
+  document.getElementById('timerLabel').textContent='Ready';
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+  const m=Math.floor(timeLeft/60), s=timeLeft%60;
+  document.getElementById('timerDisplay').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  const total=MODES[mode];
+  const progress=(total-timeLeft)/total;
+  const offset=CIRCUMFERENCE*(1-progress);
+  document.getElementById('ringFill').style.strokeDashoffset=offset;
+}
+
+function logSession(){
+  const input=document.getElementById('sessionName');
+  const name=input.value.trim();
+  if(!name) return;
+  const sessions=getSessions();
+  const now=new Date();
+  sessions.unshift({name,duration:Math.round((MODES[mode]-timeLeft)/60)||25,time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),date:todayKey()});
+  saveSessions(sessions.slice(0,50));
+  input.value='';
+  renderSessions();
+}
+
+function renderSessions(){
+  const sessions=getSessions();
+  const list=document.getElementById('sessionLogList');
+  const todaySessions=sessions.filter(s=>s.date===todayKey());
+  if(todaySessions.length===0){list.innerHTML='<div class="empty-state">No sessions logged yet today.</div>';return;}
+  list.innerHTML=todaySessions.map(s=>`<div class="session-log-item"><div class="session-dot"></div><span class="session-name">${s.name}</span><span class="session-dur">${s.duration}m</span><span class="session-time-stamp">${s.time}</span></div>`).join('');
+}
+
+// ---- NAV ----
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='history') renderHistory();
+  if(id==='focus') renderSessions();
+}
+
+// ---- INIT ----
+document.getElementById('ringFill').style.strokeDasharray=CIRCUMFERENCE;
+document.getElementById('ringFill').style.strokeDashoffset=0;
+const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const now=new Date();
+document.getElementById('dateDisplay').textContent=days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
+bootstrap();
+</script>
+</body>
+</html>
