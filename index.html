@@ -111,6 +111,43 @@ h2{font-size:18px;font-weight:500;margin-bottom:4px}
 .session-dur{color:#888780;font-size:12px}
 .session-time-stamp{color:#B4B2A9;font-size:11px;min-width:50px;text-align:right}
 .empty-state{text-align:center;padding:32px 16px;color:#B4B2A9;font-size:13px}
+
+/* ---- GYM ---- */
+.day-pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.day-pill{padding:6px 12px;border-radius:99px;font-size:12px;font-weight:500;border:0.5px solid #D3D1C7;background:#fff;cursor:pointer;color:#888780;transition:all .15s}
+.day-pill.active{background:#FAEEDA;border-color:#EF9F27;color:#854F0B}
+.day-pill.rest-day{background:#F1EFE8;border-color:#D3D1C7;color:#B4B2A9;cursor:default}
+.exercise-card{background:#fff;border:0.5px solid #D3D1C7;border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.ex-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ex-name{font-size:13px;font-weight:500;color:#2C2C2A}
+.ex-target{font-size:11px;color:#B4B2A9}
+.ex-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.ex-input-wrap{display:flex;flex-direction:column;gap:3px}
+.ex-input-label{font-size:10px;color:#B4B2A9}
+.ex-input{width:100%;padding:7px 8px;border:0.5px solid #D3D1C7;border-radius:7px;font-size:13px;color:#2C2C2A;background:#F8F7F4;outline:none;text-align:center}
+.ex-input:focus{border-color:#BA7517;background:#fff}
+.ex-last{font-size:11px;color:#888780;margin-top:6px}
+.ex-trend-up{color:#1D9E75;font-weight:500}
+.ex-trend-down{color:#E24B4A;font-weight:500}
+.ex-trend-same{color:#888780}
+.save-workout-btn{width:100%;padding:12px;background:#BA7517;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px}
+.save-workout-btn:active{background:#854F0B}
+.bw-row{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.bw-input{flex:1;padding:10px 12px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:14px;color:#2C2C2A;background:#fff;outline:none}
+.bw-input:focus{border-color:#BA7517}
+.bw-btn{padding:10px 16px;background:#BA7517;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
+.week-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.week-col{background:#F8F7F4;border-radius:10px;padding:12px}
+.week-col-title{font-size:11px;font-weight:500;color:#888780;margin-bottom:8px}
+.week-ex-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #E8E6E0;font-size:12px}
+.week-ex-row:last-child{border-bottom:none}
+.week-ex-name{color:#2C2C2A;flex:1}
+.week-ex-val{font-weight:500;color:#2C2C2A}
+.progress-badge{font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px}
+.badge-up{background:#E1F5EE;color:#0F6E56}
+.badge-down{background:#FCEBEB;color:#A32D2D}
+.badge-same{background:#F1EFE8;color:#888780}
+
 .sync-bar{text-align:center;font-size:11px;padding:5px 12px;display:none}
 .sync-bar.syncing{display:block;background:#FAEEDA;color:#854F0B}
 .sync-bar.synced{display:block;background:#E1F5EE;color:#0F6E56}
@@ -140,9 +177,10 @@ const UID = 'hamza';
 </script>
 
 <nav class="nav">
-  <button class="nav-btn active" onclick="showPage('today')">Today</button>
-  <button class="nav-btn" onclick="showPage('history')">History</button>
-  <button class="nav-btn" onclick="showPage('focus')">Focus</button>
+  <button class="nav-btn active" onclick="showPage('today',this)">Today</button>
+  <button class="nav-btn" onclick="showPage('history',this)">History</button>
+  <button class="nav-btn" onclick="showPage('focus',this)">Focus</button>
+  <button class="nav-btn" onclick="showPage('gym',this)">Gym</button>
 </nav>
 
 <!-- TODAY -->
@@ -235,6 +273,29 @@ const UID = 'hamza';
     </div>
     <div id="sessionLogList"></div>
   </div>
+</div>
+
+<!-- GYM -->
+<div id="page-gym" class="page">
+  <div style="margin-bottom:16px"><h2>Gym</h2><p class="muted">Log your session · track your progress</p></div>
+
+  <!-- Body weight -->
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:10px">Body weight</div>
+    <div class="bw-row">
+      <input class="bw-input" type="number" id="bwInput" placeholder="e.g. 72.5" step="0.1"/>
+      <button class="bw-btn" onclick="saveBodyWeight()">Log kg</button>
+    </div>
+    <div id="bwHistory" style="font-size:12px;color:#888780"></div>
+  </div>
+
+  <!-- Day selector -->
+  <div class="section-title">Select today's session</div>
+  <div class="day-pill-row" id="dayPills"></div>
+
+  <!-- Exercises for selected day -->
+  <div id="gymExercises"></div>
+  <div id="gymProgress"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -643,14 +704,267 @@ function renderSessions(){
   list.innerHTML=todaySessions.map(s=>`<div class="session-log-item"><div class="session-dot"></div><span class="session-name">${s.name}</span><span class="session-dur">${s.duration}m</span><span class="session-time-stamp">${s.time}</span></div>`).join('');
 }
 
+// ---- GYM DATA ----
+const gymSplit = {
+  Monday:   { label:'Push A — Chest + Triceps', exercises:[
+    {id:'incline_db_press',    name:'Incline Dumbbell Press',      target:'3×10–12', rest:'90s'},
+    {id:'pec_deck',            name:'Pec Deck / Cable Fly',         target:'3×15',    rest:'60s'},
+    {id:'rope_pushdown',       name:'Rope Tricep Pushdown',         target:'3×15',    rest:'60s'},
+    {id:'overhead_tricep_ext', name:'Overhead Tricep Extension',    target:'3×12',    rest:'60s'},
+  ]},
+  Tuesday:  { label:'Pull A — Back + Biceps', exercises:[
+    {id:'lat_pulldown_wide',   name:'Lat Pulldown (wide grip)',     target:'3×10–12', rest:'90s'},
+    {id:'seated_cable_row',    name:'Seated Cable Row',             target:'3×12',    rest:'75s'},
+    {id:'db_bicep_curl',       name:'Dumbbell Bicep Curl',          target:'3×12–15', rest:'60s'},
+    {id:'hammer_curl',         name:'Hammer Curl',                  target:'3×15',    rest:'60s'},
+  ]},
+  Wednesday:{ label:'Legs A — Hamstring + Glute', exercises:[
+    {id:'romanian_dl',         name:'Romanian Deadlift',            target:'3×12',    rest:'90s'},
+    {id:'lying_leg_curl_a',    name:'Lying Leg Curl',               target:'3×15',    rest:'75s'},
+    {id:'glute_bridge',        name:'Glute Bridge',                 target:'3×20',    rest:'45s'},
+    {id:'donkey_kicks',        name:'Donkey Kicks',                 target:'3×20 each',rest:'45s'},
+  ]},
+  Thursday: { label:'Push B — Triceps + Shoulders', exercises:[
+    {id:'seated_db_shoulder',  name:'Seated DB Shoulder Press',     target:'3×10–12', rest:'90s'},
+    {id:'lateral_raise',       name:'Dumbbell Lateral Raise',       target:'3×15',    rest:'60s'},
+    {id:'skull_crusher',       name:'Skull Crusher',                target:'3×12',    rest:'75s'},
+    {id:'tricep_dip',          name:'Tricep Dip',                   target:'3×12',    rest:'75s'},
+  ]},
+  Friday:   { label:'Pull B — Biceps + Back', exercises:[
+    {id:'single_arm_row',      name:'Single-arm Dumbbell Row',      target:'3×12 each',rest:'90s'},
+    {id:'close_grip_pulldown', name:'Close Grip Lat Pulldown',      target:'3×12',    rest:'75s'},
+    {id:'incline_db_curl',     name:'Incline Dumbbell Curl',        target:'3×12',    rest:'60s'},
+    {id:'cable_curl',          name:'Cable Curl',                   target:'3×15',    rest:'60s'},
+  ]},
+  Saturday: { label:'Legs B — Quad + Hamstring + Calves', exercises:[
+    {id:'leg_press',           name:'Leg Press (70° range)',        target:'3×12–15', rest:'90s'},
+    {id:'lying_leg_curl_b',    name:'Lying Leg Curl',               target:'3×15',    rest:'75s'},
+    {id:'bulgarian_split',     name:'Bulgarian Split Squat (BW)',   target:'3×12 each',rest:'75s'},
+    {id:'calf_raise',          name:'Standing Calf Raise',          target:'3×20',    rest:'45s'},
+  ]},
+  Sunday:   { label:'Rest Day', exercises:[] },
+};
+
+const GYM_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+let selectedGymDay = GYM_DAYS[new Date().getDay()===0?6:new Date().getDay()-1];
+
+function getWeekKey(offset=0){
+  const d = new Date();
+  const day = d.getDay();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - (day===0?6:day-1) + (offset*7));
+  return monday.toISOString().slice(0,10);
+}
+
+function getGymLogs(){ try{ return JSON.parse(localStorage.getItem('h_gym')||'{}'); }catch(e){ return {}; } }
+function saveGymLogs(logs){
+  localStorage.setItem('h_gym', JSON.stringify(logs));
+  db.ref(UID+'/gym').set(logs).catch(()=>{});
+}
+function getBodyWeights(){ try{ return JSON.parse(localStorage.getItem('h_bw')||'[]'); }catch(e){ return []; } }
+function saveBodyWeights(bw){
+  localStorage.setItem('h_bw', JSON.stringify(bw));
+  db.ref(UID+'/bodyweight').set(bw).catch(()=>{});
+}
+
+function saveBodyWeight(){
+  const val = parseFloat(document.getElementById('bwInput').value);
+  if(!val||val<30||val>200) return;
+  const bw = getBodyWeights();
+  bw.unshift({date:todayKey(), kg:val});
+  saveBodyWeights(bw.slice(0,60));
+  document.getElementById('bwInput').value='';
+  renderBWHistory();
+}
+
+function renderBWHistory(){
+  const bw = getBodyWeights().slice(0,5);
+  const el = document.getElementById('bwHistory');
+  if(!bw.length){ el.textContent='No entries yet.'; return; }
+  el.innerHTML = bw.map((e,i)=>{
+    let trend = '';
+    if(i<bw.length-1){
+      const diff = (e.kg - bw[i+1].kg).toFixed(1);
+      trend = diff>0 ? `<span class="ex-trend-up">+${diff}</span>` : diff<0 ? `<span class="ex-trend-down">${diff}</span>` : `<span class="ex-trend-same">—</span>`;
+    }
+    return `<span style="margin-right:12px">${e.date.slice(5)}: <b>${e.kg}kg</b> ${trend}</span>`;
+  }).join('');
+}
+
+function renderDayPills(){
+  const pills = document.getElementById('dayPills');
+  pills.innerHTML = GYM_DAYS.map(d=>{
+    const isRest = d==='Sunday';
+    const isActive = d===selectedGymDay;
+    return `<button class="day-pill${isRest?' rest-day':''}${isActive?' active':''}" onclick="${isRest?'':` selectGymDay('${d}')`}">${d.slice(0,3)}</button>`;
+  }).join('');
+}
+
+function selectGymDay(day){
+  selectedGymDay = day;
+  renderDayPills();
+  renderGymExercises();
+  renderWeekComparison();
+}
+
+function renderGymExercises(){
+  const container = document.getElementById('gymExercises');
+  const session = gymSplit[selectedGymDay];
+  if(!session||!session.exercises.length){
+    container.innerHTML='<div class="empty-state">Sunday is full rest. No logging needed.</div>';
+    return;
+  }
+  const logs = getGymLogs();
+  const todayLog = logs[todayKey()]||{};
+  const dayLog = todayLog[selectedGymDay]||{};
+
+  // Get last session for this day
+  const lastLog = getLastSessionLog(selectedGymDay) || {};
+
+  container.innerHTML = `
+    <div class="section-title">${session.label}</div>
+    ${session.exercises.map(ex=>{
+      const saved = dayLog[ex.id]||{};
+      const last = lastLog[ex.id]||null;
+      let lastText = last ? `Last: ${last.weight}kg × ${last.reps} reps` : 'No previous data';
+      let trendBadge = '';
+      if(last && saved.weight){
+        const diff = parseFloat(saved.weight) - parseFloat(last.weight);
+        if(diff>0) trendBadge = `<span class="progress-badge badge-up">+${diff}kg</span>`;
+        else if(diff<0) trendBadge = `<span class="progress-badge badge-down">${diff}kg</span>`;
+        else trendBadge = `<span class="progress-badge badge-same">same</span>`;
+      }
+      return `
+        <div class="exercise-card">
+          <div class="ex-header">
+            <span class="ex-name">${ex.name}</span>
+            <span class="ex-target">${ex.target} · ${ex.rest}</span>
+          </div>
+          <div class="ex-inputs">
+            <div class="ex-input-wrap">
+              <span class="ex-input-label">Weight (kg)</span>
+              <input class="ex-input" type="number" step="0.5" id="w_${ex.id}" value="${saved.weight||''}" placeholder="${last?last.weight:'0'}" onchange="autoSaveExercise('${ex.id}')"/>
+            </div>
+            <div class="ex-input-wrap">
+              <span class="ex-input-label">Reps</span>
+              <input class="ex-input" type="number" id="r_${ex.id}" value="${saved.reps||''}" placeholder="${last?last.reps:'0'}" onchange="autoSaveExercise('${ex.id}')"/>
+            </div>
+            <div class="ex-input-wrap">
+              <span class="ex-input-label">Sets done</span>
+              <input class="ex-input" type="number" id="s_${ex.id}" value="${saved.sets||''}" placeholder="3" onchange="autoSaveExercise('${ex.id}')"/>
+            </div>
+          </div>
+          <div class="ex-last">${lastText} ${trendBadge}</div>
+        </div>`;
+    }).join('')}
+    <button class="save-workout-btn" onclick="saveWorkout()">Save session</button>
+  `;
+}
+
+function getLastSessionLog(day){
+  const logs = getGymLogs();
+  const keys = Object.keys(logs).sort().reverse();
+  for(const k of keys){
+    if(k===todayKey()) continue;
+    if(logs[k][day]) return logs[k][day];
+  }
+  return null;
+}
+
+function autoSaveExercise(exId){
+  const w = document.getElementById('w_'+exId)?.value;
+  const r = document.getElementById('r_'+exId)?.value;
+  const s = document.getElementById('s_'+exId)?.value;
+  if(!w&&!r&&!s) return;
+  const logs = getGymLogs();
+  if(!logs[todayKey()]) logs[todayKey()]={};
+  if(!logs[todayKey()][selectedGymDay]) logs[todayKey()][selectedGymDay]={};
+  logs[todayKey()][selectedGymDay][exId] = {weight:w||0, reps:r||0, sets:s||3};
+  saveGymLogs(logs);
+}
+
+function saveWorkout(){
+  const session = gymSplit[selectedGymDay];
+  session.exercises.forEach(ex => autoSaveExercise(ex.id));
+  showSync('Workout saved!', 'synced');
+  renderGymExercises();
+  renderWeekComparison();
+}
+
+function renderWeekComparison(){
+  const container = document.getElementById('gymProgress');
+  const session = gymSplit[selectedGymDay];
+  if(!session||!session.exercises.length){ container.innerHTML=''; return; }
+
+  const logs = getGymLogs();
+  const thisWeek = getWeekKey(0);
+  const lastWeek = getWeekKey(-1);
+
+  // Find actual logs for this week and last week for selectedGymDay
+  const thisKeys = Object.keys(logs).filter(k=>k>=thisWeek).sort();
+  const lastKeys = Object.keys(logs).filter(k=>k>=lastWeek&&k<thisWeek).sort();
+
+  let thisData = null, lastData = null;
+  for(const k of thisKeys.reverse()) if(logs[k][selectedGymDay]){ thisData=logs[k][selectedGymDay]; break; }
+  for(const k of lastKeys.reverse()) if(logs[k][selectedGymDay]){ lastData=logs[k][selectedGymDay]; break; }
+
+  if(!thisData && !lastData){ container.innerHTML=`<div class="card"><p style="font-size:13px;color:#B4B2A9;text-align:center;padding:8px 0">Log a few sessions to see week-on-week comparison</p></div>`; return; }
+
+  container.innerHTML = `
+    <div class="section-title">Week-on-week comparison</div>
+    <div class="card">
+      <div class="week-compare">
+        <div class="week-col">
+          <div class="week-col-title">Last week</div>
+          ${session.exercises.map(ex=>{
+            const d = lastData?.[ex.id];
+            return `<div class="week-ex-row"><span class="week-ex-name">${ex.name.split(' ').slice(0,2).join(' ')}</span><span class="week-ex-val">${d?d.weight+'kg':'—'}</span></div>`;
+          }).join('')}
+        </div>
+        <div class="week-col">
+          <div class="week-col-title">This week</div>
+          ${session.exercises.map(ex=>{
+            const d = thisData?.[ex.id];
+            const prev = lastData?.[ex.id];
+            let badge = '';
+            if(d&&prev){
+              const diff = parseFloat(d.weight)-parseFloat(prev.weight);
+              if(diff>0) badge=`<span class="progress-badge badge-up">+${diff}kg</span>`;
+              else if(diff<0) badge=`<span class="progress-badge badge-down">${diff.toFixed(1)}kg</span>`;
+              else badge=`<span class="progress-badge badge-same">same</span>`;
+            }
+            return `<div class="week-ex-row"><span class="week-ex-name">${ex.name.split(' ').slice(0,2).join(' ')}</span><span class="week-ex-val">${d?d.weight+'kg':'—'}${badge}</span></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initGym(){
+  renderDayPills();
+  renderGymExercises();
+  renderWeekComparison();
+  renderBWHistory();
+  // Load gym logs from Firebase
+  db.ref(UID+'/gym').once('value').then(snap=>{
+    if(snap.exists()) localStorage.setItem('h_gym', JSON.stringify(snap.val()));
+    db.ref(UID+'/bodyweight').once('value').then(s=>{
+      if(s.exists()) localStorage.setItem('h_bw', JSON.stringify(s.val()));
+      renderBWHistory();
+    });
+  }).catch(()=>{});
+}
+
 // ---- NAV ----
-function showPage(id){
+function showPage(id, btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  event.target.classList.add('active');
+  if(btn) btn.classList.add('active');
   if(id==='history') renderHistory();
   if(id==='focus') renderSessions();
+  if(id==='gym') initGym();
 }
 
 // ---- INIT ----
