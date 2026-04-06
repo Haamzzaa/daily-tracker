@@ -148,27 +148,6 @@ h2{font-size:18px;font-weight:500;margin-bottom:4px}
 .badge-down{background:#FCEBEB;color:#A32D2D}
 .badge-same{background:#F1EFE8;color:#888780}
 
-.gym-timer-card{background:#fff;border:0.5px solid #D3D1C7;border-radius:12px;padding:16px;margin-bottom:12px}
-.gym-metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.gym-metric{background:#F8F7F4;border-radius:10px;padding:10px 8px;text-align:center}
-.gym-metric-label{font-size:10px;color:#888780;margin-bottom:3px}
-.gym-metric-val{font-size:18px;font-weight:600;color:#2C2C2A}
-.gym-timer-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.gym-live-bar{background:#E1F5EE;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:none;text-align:center}
-.gym-live-bar.active{display:block}
-.gym-live-time{font-size:20px;font-weight:600;color:#0F6E56}
-.gym-live-label{font-size:11px;color:#1D9E75;margin-bottom:2px}
-.gym-status{display:flex;align-items:center;gap:6px;font-size:12px;color:#888780}
-.gym-dot{width:7px;height:7px;border-radius:50%;background:#D3D1C7;flex-shrink:0;transition:background .3s}
-.gym-dot.active{background:#1D9E75}
-.gym-log-row{display:grid;grid-template-columns:1fr 70px 70px 80px;gap:6px;padding:8px 10px;font-size:12px;align-items:center;border-bottom:0.5px solid #F1EFE8}
-.gym-log-row:last-child{border-bottom:none}
-.gym-log-header{font-size:10px;color:#B4B2A9;font-weight:600;background:#F8F7F4;border-radius:6px 6px 0 0;padding:6px 10px}
-.gym-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:99px;text-align:center}
-.gym-badge.good{background:#E1F5EE;color:#0F6E56}
-.gym-badge.over{background:#FAEEDA;color:#854F0B}
-.gym-badge.short{background:#FCEBEB;color:#A32D2D}
-.gym-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 .sync-bar{text-align:center;font-size:11px;padding:5px 12px;display:none}
 .sync-bar.syncing{display:block;background:#FAEEDA;color:#854F0B}
 .sync-bar.synced{display:block;background:#E1F5EE;color:#0F6E56}
@@ -299,44 +278,6 @@ const UID = 'hamza';
 <!-- GYM -->
 <div id="page-gym" class="page">
   <div style="margin-bottom:16px"><h2>Gym</h2><p class="muted">Log your session · track your progress</p></div>
-
-  <!-- Gym time tracker -->
-  <div class="section-title">Session timer</div>
-  <div class="gym-timer-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="gym-status"><div class="gym-dot" id="gymDot"></div><span id="gymStatusText">Not in gym</span></div>
-      <span style="font-size:11px;color:#B4B2A9" id="gymTodayDate"></span>
-    </div>
-    <div class="gym-metric-grid">
-      <div class="gym-metric"><div class="gym-metric-label">Check-in</div><div class="gym-metric-val" id="gymCheckinDisplay">--:--</div></div>
-      <div class="gym-metric"><div class="gym-metric-label">Check-out</div><div class="gym-metric-val" id="gymCheckoutDisplay">--:--</div></div>
-      <div class="gym-metric"><div class="gym-metric-label">Duration</div><div class="gym-metric-val" id="gymDurationDisplay">0 min</div></div>
-    </div>
-    <div class="gym-live-bar" id="gymLiveBar">
-      <div class="gym-live-label">Session in progress</div>
-      <div class="gym-live-time" id="gymLiveTime">00:00</div>
-    </div>
-    <div class="gym-timer-btns">
-      <button class="save-workout-btn" id="gymCheckinBtn" onclick="gymCheckIn()" style="margin-top:0">Check in</button>
-      <button class="save-workout-btn" id="gymCheckoutBtn" onclick="gymCheckOut()" style="margin-top:0;background:#888780;opacity:0.4" disabled>Check out</button>
-    </div>
-  </div>
-
-  <!-- Session log -->
-  <div class="section-title">Time log</div>
-  <div class="card" style="padding:12px">
-    <div style="border:0.5px solid #D3D1C7;border-radius:8px;overflow:hidden">
-      <div class="gym-log-row gym-log-header" style="display:grid;grid-template-columns:1fr 70px 70px 80px">
-        <span>Date</span><span>In</span><span>Out</span><span>Duration</span>
-      </div>
-      <div id="gymLogBody"><div style="padding:20px;text-align:center;font-size:13px;color:#B4B2A9">No sessions logged yet</div></div>
-    </div>
-    <div class="gym-summary-grid">
-      <div class="gym-metric"><div class="gym-metric-label">Sessions</div><div class="gym-metric-val" id="gymTotalSessions">0</div></div>
-      <div class="gym-metric"><div class="gym-metric-label">Avg time</div><div class="gym-metric-val" id="gymAvgDuration">0 min</div></div>
-      <div class="gym-metric"><div class="gym-metric-label">Total hours</div><div class="gym-metric-val" id="gymTotalHours">0h</div></div>
-    </div>
-  </div>
 
   <!-- Body weight -->
   <div class="card">
@@ -765,47 +706,55 @@ function renderSessions(){
 
 // ---- GYM DATA ----
 const gymSplit = {
-  Monday:   { label:'Push A — Chest + Triceps', exercises:[
-    {id:'incline_db_press',    name:'Incline Dumbbell Press',      target:'3×10–12', rest:'90s'},
-    {id:'flat_db_press',       name:'Flat Dumbbell Press',          target:'3×10–12', rest:'90s'},
-    {id:'pec_deck',            name:'Pec Deck / Cable Fly',         target:'3×15',    rest:'60s'},
-    {id:'rope_pushdown',       name:'Rope Tricep Pushdown',         target:'3×15',    rest:'60s'},
-    {id:'overhead_tricep_ext', name:'Overhead Tricep Extension',    target:'3×12',    rest:'60s'},
+  Monday:   { label:'Push — Strength Focus', exercises:[
+    {id:'barbell_bench',       name:'Barbell Bench Press',          target:'3×5–8',    rest:'120s'},
+    {id:'incline_db_press',    name:'Incline Dumbbell Press',       target:'3×10–12',  rest:'90s'},
+    {id:'pec_deck',            name:'Pec Deck / Cable Fly',         target:'3×15',     rest:'60s'},
+    {id:'rope_pushdown',       name:'Rope Tricep Pushdown',         target:'3×15',     rest:'60s'},
+    {id:'overhead_tricep_ext', name:'Overhead Tricep Extension',    target:'3×12',     rest:'60s'},
   ]},
-  Tuesday:  { label:'Pull A — Back + Biceps', exercises:[
-    {id:'lat_pulldown_wide',   name:'Lat Pulldown (wide grip)',     target:'3×10–12', rest:'90s'},
-    {id:'seated_cable_row',    name:'Seated Cable Row',             target:'3×12',    rest:'75s'},
+  Tuesday:  { label:'Pull — Heavy Grip', exercises:[
+    {id:'lat_pulldown_wide',   name:'Lat Pulldown',                 target:'3×10–12',  rest:'90s'},
+    {id:'seated_cable_row_a',  name:'Seated Cable Row',             target:'3×12',     rest:'75s'},
     {id:'single_arm_row_a',    name:'Single-arm Dumbbell Row',      target:'3×12 each',rest:'75s'},
-    {id:'db_bicep_curl',       name:'Dumbbell Bicep Curl',          target:'3×12–15', rest:'60s'},
-    {id:'hammer_curl',         name:'Hammer Curl',                  target:'3×15',    rest:'60s'},
+    {id:'face_pull_a',         name:'Face Pull',                    target:'3×15',     rest:'60s'},
+    {id:'db_bicep_curl',       name:'Dumbbell Curl',                target:'3×12–15',  rest:'60s'},
+    {id:'hammer_curl',         name:'Hammer Curl',                  target:'3×15',     rest:'60s'},
+    {id:'dead_hang',           name:'Dead Hang',                    target:'3 sets',   rest:'60s'},
+    {id:'farmer_carry',        name:'Farmer Carry',                 target:'2 sets',   rest:'60s'},
   ]},
-  Wednesday:{ label:'Legs A — Hamstring + Glute (Knee-safe)', exercises:[
-    {id:'romanian_dl_a',       name:'Romanian Deadlift',            target:'3×12',    rest:'90s'},
-    {id:'heel_elev_squat_a',   name:'Heel Elevated Goblet Squat',   target:'3×12',    rest:'75s'},
-    {id:'lying_leg_curl_a',    name:'Lying Leg Curl',               target:'3×15',    rest:'75s'},
-    {id:'glute_bridge',        name:'Glute Bridge',                 target:'3×20',    rest:'45s'},
-    {id:'calf_raise_a',        name:'Standing Calf Raise',          target:'3×20',    rest:'45s'},
+  Wednesday:{ label:'Legs + Core', exercises:[
+    {id:'romanian_dl_a',       name:'Romanian Deadlift',            target:'3×12',     rest:'90s'},
+    {id:'goblet_squat_a',      name:'Goblet Squat',                 target:'3×12',     rest:'75s'},
+    {id:'lying_leg_curl_a',    name:'Lying Leg Curl',               target:'3×15',     rest:'75s'},
+    {id:'glute_bridge_a',      name:'Glute Bridge',                 target:'3×20',     rest:'45s'},
+    {id:'calf_raise_a',        name:'Standing Calf Raise',          target:'3×20',     rest:'45s'},
+    {id:'plank_a',             name:'Plank',                        target:'3 sets',   rest:'45s'},
   ]},
-  Thursday: { label:'Push B — Shoulders + Triceps', exercises:[
-    {id:'seated_db_shoulder',  name:'Seated DB Shoulder Press',     target:'3×10–12', rest:'90s'},
-    {id:'lateral_raise',       name:'Dumbbell Lateral Raise',       target:'3×15',    rest:'60s'},
-    {id:'arnold_press',        name:'Arnold Press',                 target:'3×12',    rest:'75s'},
-    {id:'rope_pushdown_b',     name:'Rope Tricep Pushdown',         target:'3×15',    rest:'60s'},
-    {id:'overhead_tricep_b',   name:'Overhead Tricep Extension',    target:'3×12',    rest:'60s'},
+  Thursday: { label:'Push — Shoulders + Triceps', exercises:[
+    {id:'seated_db_shoulder',  name:'Seated DB Shoulder Press',     target:'3×10–12',  rest:'90s'},
+    {id:'lateral_raise',       name:'Dumbbell Lateral Raise',       target:'3×15',     rest:'60s'},
+    {id:'arnold_press',        name:'Arnold Press',                 target:'3×12',     rest:'75s'},
+    {id:'rope_pushdown_b',     name:'Rope Tricep Pushdown',         target:'3×15',     rest:'60s'},
+    {id:'overhead_tricep_b',   name:'Overhead Tricep Extension',    target:'3×12',     rest:'60s'},
   ]},
-  Friday:   { label:'Pull B — Biceps + Back', exercises:[
-    {id:'close_grip_pulldown', name:'Close Grip Lat Pulldown',      target:'3×12',    rest:'90s'},
-    {id:'seated_cable_row_b',  name:'Seated Cable Row',             target:'3×12',    rest:'75s'},
+  Friday:   { label:'Pull — Pull-up Progression + Grip', exercises:[
+    {id:'assisted_pullups',    name:'Assisted Pull-ups / Negatives',target:'3 sets',   rest:'90s'},
+    {id:'seated_cable_row_b',  name:'Seated Cable Row',             target:'3×12',     rest:'75s'},
     {id:'single_arm_row_b',    name:'Single-arm Dumbbell Row',      target:'3×12 each',rest:'75s'},
-    {id:'incline_db_curl',     name:'Incline Dumbbell Curl',        target:'3×12',    rest:'60s'},
-    {id:'cable_curl',          name:'Cable Curl',                   target:'3×15',    rest:'60s'},
+    {id:'face_pull_b',         name:'Face Pull',                    target:'3×15',     rest:'60s'},
+    {id:'incline_db_curl',     name:'Incline DB Curl',              target:'3×12',     rest:'60s'},
+    {id:'cable_curl',          name:'Cable Curl',                   target:'3×15',     rest:'60s'},
+    {id:'wrist_curl',          name:'Wrist Curl',                   target:'2 sets',   rest:'45s'},
+    {id:'reverse_wrist_curl',  name:'Reverse Wrist Curl',           target:'2 sets',   rest:'45s'},
   ]},
-  Saturday: { label:'Legs B — Quad + Hamstring + Calves (Knee-safe)', exercises:[
-    {id:'leg_press',           name:'Leg Press (70° range)',        target:'3×12–15', rest:'90s'},
-    {id:'heel_elev_squat_b',   name:'Heel Elevated Goblet Squat',   target:'3×12',    rest:'75s'},
-    {id:'romanian_dl_b',       name:'Romanian Deadlift',            target:'3×12',    rest:'90s'},
-    {id:'glute_bridge_b',      name:'Glute Bridge',                 target:'3×20',    rest:'45s'},
-    {id:'calf_raise_b',        name:'Seated Calf Raise',            target:'3×20',    rest:'45s'},
+  Saturday: { label:'Legs + Core', exercises:[
+    {id:'leg_press',           name:'Leg Press (70 deg range)',     target:'3×12–15',  rest:'90s'},
+    {id:'goblet_squat_b',      name:'Goblet Squat',                 target:'3×12',     rest:'75s'},
+    {id:'romanian_dl_b',       name:'Romanian Deadlift',            target:'3×12',     rest:'90s'},
+    {id:'glute_bridge_b',      name:'Glute Bridge',                 target:'3×20',     rest:'45s'},
+    {id:'calf_raise_b',        name:'Seated Calf Raise',            target:'3×20',     rest:'45s'},
+    {id:'leg_raises',          name:'Leg Raises',                   target:'3×12–15',  rest:'45s'},
   ]},
   Sunday:   { label:'Active Recovery', exercises:[] },
 };
@@ -876,7 +825,7 @@ function renderGymExercises(){
   const container = document.getElementById('gymExercises');
   const session = gymSplit[selectedGymDay];
   if(!session||!session.exercises.length){
-    container.innerHTML='<div class="empty-state">Sunday is active recovery. Use the timer above to log your time.</div>';
+    container.innerHTML='<div class="empty-state">Sunday is active recovery. Incline walk, stretching, mobility work.</div>';
     return;
   }
   const logs = getGymLogs();
@@ -1006,97 +955,7 @@ function renderWeekComparison(){
   `;
 }
 
-// ---- GYM TIME TRACKER ----
-let gymCheckInTime = null;
-let gymTimerInterval = null;
-
-function gymFmtTime(date){ return date.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}); }
-function gymFmtDuration(mins){
-  if(mins<60) return Math.round(mins)+' min';
-  const h=Math.floor(mins/60), m=Math.round(mins%60);
-  return m>0?h+'h '+m+'m':h+'h';
-}
-function gymGetTimeLogs(){ try{ return JSON.parse(localStorage.getItem('h_gym_time')||'[]'); }catch(e){ return []; } }
-function gymSaveTimeLogs(logs){
-  localStorage.setItem('h_gym_time', JSON.stringify(logs));
-  db.ref(UID+'/gymtime').set(logs).catch(()=>{});
-}
-function gymDurationBadge(mins){
-  if(mins<45) return ['Too short','short'];
-  if(mins<=80) return ['On target','good'];
-  return ['Over time','over'];
-}
-
-function gymCheckIn(){
-  gymCheckInTime = new Date();
-  document.getElementById('gymCheckinDisplay').textContent = gymFmtTime(gymCheckInTime);
-  document.getElementById('gymCheckoutDisplay').textContent = '--:--';
-  document.getElementById('gymDurationDisplay').textContent = '0 min';
-  document.getElementById('gymCheckinBtn').disabled = true;
-  document.getElementById('gymCheckinBtn').style.opacity = '0.4';
-  document.getElementById('gymCheckoutBtn').disabled = false;
-  document.getElementById('gymCheckoutBtn').style.opacity = '1';
-  document.getElementById('gymDot').classList.add('active');
-  document.getElementById('gymStatusText').textContent = 'In gym';
-  document.getElementById('gymLiveBar').classList.add('active');
-  gymTimerInterval = setInterval(()=>{
-    const elapsed = Math.floor((new Date()-gymCheckInTime)/1000);
-    const m = Math.floor(elapsed/60), s = elapsed%60;
-    document.getElementById('gymLiveTime').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-  },1000);
-}
-
-function gymCheckOut(){
-  if(!gymCheckInTime) return;
-  clearInterval(gymTimerInterval);
-  const outTime = new Date();
-  const mins = (outTime-gymCheckInTime)/60000;
-  document.getElementById('gymCheckoutDisplay').textContent = gymFmtTime(outTime);
-  document.getElementById('gymDurationDisplay').textContent = gymFmtDuration(mins);
-  document.getElementById('gymCheckinBtn').disabled = false;
-  document.getElementById('gymCheckinBtn').style.opacity = '1';
-  document.getElementById('gymCheckoutBtn').disabled = true;
-  document.getElementById('gymCheckoutBtn').style.opacity = '0.4';
-  document.getElementById('gymDot').classList.remove('active');
-  document.getElementById('gymStatusText').textContent = 'Session done';
-  document.getElementById('gymLiveBar').classList.remove('active');
-  const logs = gymGetTimeLogs();
-  logs.unshift({date:todayKey(), inTime:gymFmtTime(gymCheckInTime), outTime:gymFmtTime(outTime), duration:mins});
-  gymSaveTimeLogs(logs.slice(0,60));
-  gymCheckInTime = null;
-  renderGymTimeLogs();
-}
-
-function renderGymTimeLogs(){
-  const logs = gymGetTimeLogs();
-  const body = document.getElementById('gymLogBody');
-  if(!logs.length){ body.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:#B4B2A9">No sessions logged yet</div>'; return; }
-  body.innerHTML = logs.slice(0,14).map((s,i)=>{
-    const [label,cls] = gymDurationBadge(s.duration);
-    const bg = i%2===0?'':'background:#F8F7F4';
-    const dateObj = new Date(s.date+'T12:00:00');
-    const dateLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dateObj.getDay()]+', '+dateObj.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dateObj.getMonth()];
-    return `<div class="gym-log-row" style="${bg}"><span style="color:#2C2C2A">${dateLabel}</span><span style="color:#888780">${s.inTime}</span><span style="color:#888780">${s.outTime}</span><span class="gym-badge ${cls}">${gymFmtDuration(s.duration)}</span></div>`;
-  }).join('');
-  const total = logs.length;
-  const totalMins = logs.reduce((a,s)=>a+s.duration,0);
-  document.getElementById('gymTotalSessions').textContent = total;
-  document.getElementById('gymAvgDuration').textContent = gymFmtDuration(totalMins/total);
-  document.getElementById('gymTotalHours').textContent = (totalMins/60).toFixed(1)+'h';
-}
-
-function initGymTimer(){
-  const d = new Date();
-  document.getElementById('gymTodayDate').textContent = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]+', '+d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
-  // Load gym time logs from Firebase
-  db.ref(UID+'/gymtime').once('value').then(snap=>{
-    if(snap.exists()) localStorage.setItem('h_gym_time', JSON.stringify(snap.val()));
-    renderGymTimeLogs();
-  }).catch(()=>renderGymTimeLogs());
-}
-
 function initGym(){
-  initGymTimer();
   renderDayPills();
   renderGymExercises();
   renderWeekComparison();
